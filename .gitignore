@@ -1,0 +1,4 @@
+__pycache__/
+*.png
+*.dialog-leveled.*
+.tmp-*.mka
