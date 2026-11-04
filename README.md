@@ -5,7 +5,7 @@ Movie soundtracks are often mixed with a huge dynamic range: dialog sits 10–20
 The original audio is never touched. A processed copy is **added as a new, default audio track**, so you can always switch back.
 
 ```
-$ dialog-leveler "Star Trek Into Darkness.mkv"
+$ dialog-leveler movie-file.mkv
 audio stream a:0: ac3 stereo 48000 Hz lang=eng
 analysed 132.1 min in 31 s
 dialog level    -33.7 LUFS  (median of speech-like frames (10.9% of runtime))
@@ -103,7 +103,7 @@ Use `--plot` to see the level histogram, the curve and the gain over time for a 
 
 ## Credits
 
-This tool was implemented by [Claude](https://claude.ai), Anthropic's AI model, from a prompt by [@mickjc750](https://github.com/mickjc750) describing the intended method: demux the audio, build a level map from a mono detection signal with zero-phase smoothing, use a level histogram to find the dialog and action levels, derive a gain curve from them, apply it to every track and remux. That design was discussed and refined (K-weighting, measuring as a stereo downmix, speech-band dialog detection, asymmetric attack/release, a final limiter) before any code was written, then tuned on a real film.
+This tool was implemented by [Claude Opus 5.5](https://claude.ai), Anthropic's AI model, from a prompt by [@mickjc750](https://github.com/mickjc750) describing the intended method: demux the audio, build a level map from a mono detection signal with zero-phase smoothing, use a level histogram to find the dialog and action levels, derive a gain curve from them, apply it to every track and remux. That design was discussed and refined (K-weighting, measuring as a stereo downmix, speech-band dialog detection, asymmetric attack/release, a final limiter) before any code was written, then tuned on a real film.
 
 ## License
 
