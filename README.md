@@ -79,6 +79,7 @@ for f in *.mkv; do dialog-leveler "$f"; done
 | `--codec`, `--bitrate` | same as source | Output audio format, e.g. `--codec eac3 --bitrate 640k`. |
 | `--stream` | default track | Which audio stream to process (0 = first audio stream). |
 | `--title` | `Dialog leveled` | Title of the new audio track. |
+| `--no-default` | off | Don't make the new track the default. The original stays selected and you can switch to the leveled track in your player when needed. |
 
 The remaining options (`--knee`, `--knee-start`, `--lookahead`, `--smooth`, `--level-window`, `--action-pct`, `--max-ratio`, `--gate`, `--ceiling`) are for fine-tuning. The defaults suit most films.
 

@@ -267,7 +267,7 @@ def process_audio(path, a_idx, stream, gain_db, args, tmp_out):
     return codec, bitrate
 
 
-def remux(path, info, a_idx, stream, tmp_audio, out_path, title):
+def remux(path, info, a_idx, stream, tmp_audio, out_path, title, make_default=True):
     n_audio = sum(1 for s in info["streams"] if s.get("codec_type") == "audio")
     start = float(stream.get("start_time") or 0)
     lang = stream.get("tags", {}).get("language")
@@ -276,10 +276,13 @@ def remux(path, info, a_idx, stream, tmp_audio, out_path, title):
         cmd += ["-itsoffset", f"{start:.6f}"]
     cmd += ["-i", tmp_audio, "-map", "0", "-map", "1:a", "-c", "copy",
             "-map_metadata", "0", "-map_chapters", "0"]
-    for i in range(n_audio):
-        cmd += [f"-disposition:a:{i}", "0"]
-    cmd += [f"-disposition:a:{n_audio}", "default",
-            f"-metadata:s:a:{n_audio}", f"title={title}"]
+    if make_default:
+        for i in range(n_audio):
+            cmd += [f"-disposition:a:{i}", "0"]
+        cmd += [f"-disposition:a:{n_audio}", "default"]
+    else:
+        cmd += [f"-disposition:a:{n_audio}", "0"]
+    cmd += [f"-metadata:s:a:{n_audio}", f"title={title}"]
     if lang:
         cmd += [f"-metadata:s:a:{n_audio}", f"language={lang}"]
     cmd += [out_path]
@@ -351,6 +354,8 @@ def main():
     ap.add_argument("--codec", help="output audio codec (default: same as source where possible, else eac3/libopus)")
     ap.add_argument("--bitrate", help="output audio bitrate, e.g. 640k")
     ap.add_argument("--title", default="Dialog leveled", help="title of the new audio track")
+    ap.add_argument("--no-default", action="store_true",
+                    help="keep the original default audio track as default; the new track is added but not selected")
     ap.add_argument("--analyse-only", action="store_true", help="print analysis, write nothing")
     ap.add_argument("--plot", action="store_true", help="save a PNG of histogram, curve and gain")
     args = ap.parse_args()
@@ -404,7 +409,7 @@ def main():
         t1 = time.time()
         codec, bitrate = process_audio(args.input, a_idx, st, gain, args, tmp)
         print(f"encoded {codec} {bitrate or ''} in {time.time() - t1:.0f} s")
-        remux(args.input, info, a_idx, st, tmp, out_path, args.title)
+        remux(args.input, info, a_idx, st, tmp, out_path, args.title, not args.no_default)
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
