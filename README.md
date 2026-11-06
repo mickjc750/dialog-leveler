@@ -54,11 +54,12 @@ You can also run it in place without installing: `python3 dialog_leveler.py movi
 ## Usage
 
 ```sh
-dialog-leveler movie.mkv                  # writes movie.dialog-leveled.mkv
-dialog-leveler movie.mkv -o out.mkv       # choose output name
-dialog-leveler movie.mkv --analyse-only   # just print the measurements
-dialog-leveler movie.mkv --plot           # also save movie.dialog-leveled.png
-dialog-leveler --help                     # all options
+dialog-leveler movie.mkv                      # writes movie.dialog-leveled.mkv
+dialog-leveler movie.mkv -o out.mkv           # choose output name
+dialog-leveler movie.mkv --dialog-level -27   # also set dialog to -27 LUFS
+dialog-leveler movie.mkv --analyse-only       # just print the measurements
+dialog-leveler movie.mkv --plot               # also save movie.dialog-leveled.png
+dialog-leveler --help                         # all options
 ```
 
 Process a whole folder:
@@ -73,8 +74,8 @@ for f in *.mkv; do dialog-leveler "$f"; done
 |---|---|---|
 | `--target` | `6` | How many dB above dialog the loudest parts end up. Lower = flatter, higher = more punch. |
 | `--release` | `800` | How fast (ms) the volume recovers after a loud moment. Shorter recovers faster but can pump. |
-| `--makeup` | `0` | Extra gain (dB) applied to everything, to use the headroom freed by turning down the loud parts. |
-| `--dialog` | auto | Set the dialog level (LUFS) by hand if auto-detection gets it wrong. |
+| `--dialog-level` | unchanged | Output dialog level in LUFS, e.g. `-27`. Everything is shifted so dialog lands here, which gives every film the same volume. Around -27 to -24 is a sensible range; loud parts end up `--target` dB above it. |
+| `--detected-dialog` | auto | Skip detection and use this as the input dialog level (LUFS), if auto-detection gets it wrong. |
 | `--codec`, `--bitrate` | same as source | Output audio format, e.g. `--codec eac3 --bitrate 640k`. |
 | `--stream` | default track | Which audio stream to process (0 = first audio stream). |
 | `--title` | `Dialog leveled` | Title of the new audio track. |

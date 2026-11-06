@@ -122,9 +122,9 @@ def find_levels(pk, ps, pb, args):
     bass_ratio = 10 * np.log10(sb / ss)
     active = Lc > args.gate
     speechy = active & (speech_share > -2.5) & (bass_ratio < -6)
-    if args.dialog is not None:
-        dialog = args.dialog
-        how = "given"
+    if args.detected_dialog is not None:
+        dialog = args.detected_dialog
+        how = "given with --detected-dialog"
     elif speechy.mean() > 0.02:
         dialog = float(np.median(Lc[speechy]))
         how = f"median of speech-like frames ({speechy.mean() * 100:.1f}% of runtime)"
@@ -338,13 +338,15 @@ def main():
     ap.add_argument("--knee", type=float, default=6.0, help="soft knee width dB (6)")
     ap.add_argument("--max-ratio", type=float, default=20.0, help="upper limit on the compression ratio (20)")
     ap.add_argument("--action-pct", type=float, default=99.0, help="percentile defining action level (99)")
-    ap.add_argument("--dialog", type=float, help="override detected dialog level (LUFS)")
+    ap.add_argument("--dialog-level", type=float,
+                    help="set the output dialog level in LUFS, e.g. -27 (default: leave dialog at its original level)")
+    ap.add_argument("--detected-dialog", type=float,
+                    help="skip dialog detection and use this input dialog level (LUFS)")
     ap.add_argument("--gate", type=float, default=-60.0, help="ignore levels below this LUFS, never adjusted (-60)")
     ap.add_argument("--level-window", type=float, default=200.0, help="level detector window ms (200)")
     ap.add_argument("--lookahead", type=float, default=50.0, help="gain starts falling this many ms before a loud event (50)")
     ap.add_argument("--release", type=float, default=800.0, help="release time constant ms (800)")
     ap.add_argument("--smooth", type=float, default=40.0, help="final gain smoothing ms (40)")
-    ap.add_argument("--makeup", type=float, default=0.0, help="extra gain dB applied to everything (0)")
     ap.add_argument("--ceiling", type=float, default=-1.0, help="limiter ceiling dBFS (-1)")
     ap.add_argument("--codec", help="output audio codec (default: same as source where possible, else eac3/libopus)")
     ap.add_argument("--bitrate", help="output audio bitrate, e.g. 640k")
@@ -369,6 +371,7 @@ def main():
     g = curve(L, thr, ratio, args.knee) - L
     g[L < args.gate] = 0.0
     gain = smooth_gain(g, args)
+    args.makeup = 0.0 if args.dialog_level is None else args.dialog_level - res["dialog"]
 
     act = res["active"]
     after = L + gain + args.makeup
@@ -381,6 +384,11 @@ def main():
           f"({np.percentile(after[act], args.action_pct) - res['dialog'] - args.makeup:+.1f} dB vs dialog), "
           f"max gain reduction {-gain.min():.1f} dB, "
           f"reducing >1 dB {np.mean(gain < -1) * 100:.1f}% of runtime")
+    if args.dialog_level is not None:
+        print(f"output dialog  {args.dialog_level:6.1f} LUFS  (gain {args.makeup:+.1f} dB applied to everything)")
+        if args.dialog_level + args.target > -14:
+            print(f"warning: loud parts will sit near {args.dialog_level + args.target:.0f} LUFS; "
+                  f"the peak limiter will work hard. Consider a lower --dialog-level.")
     print("\nhistogram (# all, * speech-like), LUFS:\n" + text_hist(res["Lc"], act, res["speechy"]))
 
     base, ext = os.path.splitext(args.input)
